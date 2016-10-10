@@ -1,4 +1,5 @@
 import os
+import logging
 from datetime import datetime
 from random import randint
 
@@ -11,6 +12,8 @@ from collective.sendaspdf.utils import find_filename, update_relative_url
 from collective.sendaspdf.utils import md5_hash
 from collective.sendaspdf.utils import extract_from_url
 from collective.sendaspdf.interfaces import ISendAsPDFOptionsMaker
+
+#logger = logging.getLogger('collective.sendaspdf')
 
 
 class BaseView(BrowserView):
@@ -98,6 +101,14 @@ class BaseView(BrowserView):
         url = self.request.form['page_url']
         context_url = self.context.absolute_url()
 
+        
+        # No need to download anything here, if we are not
+        # pre-downloading the source. We return the 
+        # context-url instead.
+        if getattr(self.pdf_tool, 'use_real_url_instead_of_view', False):
+            return context_url
+        
+
         view_name, get_params = extract_from_url(url, context_url)
 
         # Now we will reinject the GET parameters in the request.
@@ -118,7 +129,7 @@ class BaseView(BrowserView):
             # self.context.restrictedTraverse(x), where x is None or
             # an empty string.
             view = self.context
-
+        
         return update_relative_url(view(), self.context)
 
     def generate_temp_filename(self):
@@ -237,6 +248,7 @@ class BaseView(BrowserView):
         # so we check if the field is there.
         if getattr(self.pdf_tool, 'rewrite_https_links', False):
             source = source.replace('https://', 'http://')
+
         export_file, err = transform_module.html_to_pdf(
             source,
             self.tempdir,

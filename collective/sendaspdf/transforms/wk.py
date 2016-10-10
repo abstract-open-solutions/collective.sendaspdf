@@ -40,26 +40,36 @@ valued_options = ['copies', 'cover', 'dpi',
 
 def html_to_pdf(source, export_dir, filename,
                 original_url, use_print_css, extra_options=[]):
-    # First we need to store the source in a temporary
-    # file.
-    html_filename = find_filename(export_dir,
-                                  filename,
-                                  'html')
-    if not html_filename:
-        return None, ['no_filename_temp_html']
+ 
+    # from url ?
+    from_url = True if source.startswith('http') else False    
 
-    html_file = file('%s/%s' % (export_dir, html_filename),
-                     'wb')
+    if from_url is True:
+        uri = source
+    else:
+        # First we need to store the source in a temporary
+        # file.
+        html_filename = find_filename(export_dir,
+                                      filename,
+                                      'html')
 
-    html_file.write(source)
-    html_file.close()
+        if not html_filename:
+            return None, ['no_filename_temp_html']
+
+
+        html_file = file('%s/%s' % (export_dir, html_filename),
+                         'wb')
+
+        html_file.write(source)
+        html_file.close()
+        uri = 'file://%s/%s' % (export_dir, html_filename)
 
     # Run the wkhtmltopdf command.
     args = [wk_command,
             '--disable-javascript',
             '--encoding',
             'utf-8',
-            'file://%s/%s' % (export_dir, html_filename),
+            uri,
             '%s/%s' % (export_dir, filename)]
 
     if use_print_css:
@@ -89,11 +99,12 @@ def html_to_pdf(source, export_dir, filename,
                      'Error: %s', args, err)
         return None, ['pdf_generation_failed']
 
-    try:
-        os.remove('%s/%s' % (export_dir, html_filename))
-    except IOError, err:
-        logger.error('Temp file does not exist: %s. wkhtmltopdf cmd: %s',
-                     err, args)
+    if from_url is False:
+        try:
+            os.remove('%s/%s' % (export_dir, html_filename))
+        except IOError, err:
+            logger.error('Temp file does not exist: %s. wkhtmltopdf cmd: %s',
+                         err, args)
 
     try:
         pdf_file = file('%s/%s' % (export_dir, filename), 'r')

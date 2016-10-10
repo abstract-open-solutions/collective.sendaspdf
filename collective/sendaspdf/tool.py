@@ -64,6 +64,17 @@ sendAsPDFSchema = ATDocumentSchema.copy() + atapi.Schema((
                           'generated pdf files'))),
 
     atapi.BooleanField(
+        name='use_real_url_instead_of_view',
+        default=True,
+        widget=atapi.BooleanWidget(
+            label=_(u'label_use_real_url_instead_of_view',
+                    default=u'Use real URL instead of the view'),
+            description=_(u'Use the real URL instead of the view when printing a page (wkhtmltopdf only)',
+                          default=u'Use the real URL instead of the view when printing a page (wkhtmltopdf only)'
+                         ))),
+
+
+    atapi.BooleanField(
         name='rewrite_https_links',
         default=False,
         widget=atapi.BooleanWidget(
