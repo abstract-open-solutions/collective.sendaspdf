@@ -35,7 +35,7 @@ valued_options = ['copies', 'cover', 'dpi',
                   'header-right', 'footer-font-name', 'footer-html',
                   'footer-font-size', 'footer-spacing',
                   'footer-left', 'footer-center', 'footer-right',
-                  'toc-depth', 'toc-header-text', 'cookie']
+                  'toc-depth', 'toc-header-text', 'cookie', 'viewport-size']
 
 
 def html_to_pdf(source, export_dir, filename,
@@ -77,7 +77,7 @@ def html_to_pdf(source, export_dir, filename,
 
     for opt in extra_options:
         args.insert(4, opt)
-
+    logger.info(args)
     try:
         proc = subprocess.Popen(args,
                                 stdin=TemporaryFile(),

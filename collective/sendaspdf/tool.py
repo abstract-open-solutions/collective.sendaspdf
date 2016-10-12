@@ -1,4 +1,6 @@
 import os
+import re
+from subprocess import check_output
 from datetime import datetime
 
 from zope.i18n import translate
@@ -16,6 +18,9 @@ from Products.ATContentTypes.content.document import ATDocumentSchema
 import config
 
 from collective.sendaspdf import SendAsPDFMessageFactory as _
+
+import logging
+logger = logging.getLogger('collective.sendaspdf')
 
 
 class ISendAsPDFTool(Interface):
@@ -71,7 +76,9 @@ sendAsPDFSchema = ATDocumentSchema.copy() + atapi.Schema((
                     default=u'Use real URL instead of the view'),
             description=_(u'Use the real URL instead of the view when printing a page (wkhtmltopdf only)',
                           default=u'Use the real URL instead of the view when printing a page (wkhtmltopdf only)'
-                         ))),
+                         )),
+        schemata='wk'
+    ),
 
 
     atapi.BooleanField(
@@ -176,6 +183,24 @@ sendAsPDFSchema = ATDocumentSchema.copy() + atapi.Schema((
                           'prepended to the generated files.')),
         schemata='wk'),
 
+    atapi.StringField(
+        name='page_size',
+        default='A4',
+        widget=atapi.SelectionWidget(
+            format="select",
+            label=_(u'label_pdf_page_size',
+                    default=u'PDF page format.')),
+        vocabulary='_wkPagesizeVocabulary',
+        schemata='wk'),
+
+    atapi.StringField(
+        name='screen_size',
+        default='1280x1024',
+        widget=atapi.StringWidget(
+            label=_(u'label_pdf_screen_size',
+                    default=u'PDF print screen size')),
+        schemata='wk'),
+
     atapi.IntegerField(
         name='margin_top',
         default=10,
@@ -271,6 +296,15 @@ class SendAsPDFTool(ImmutableId, ATDocument):
                default=u'wkhtmltopdf: Simple shell utility to convert '
                'html to pdf using the webkit (Safari, Chrome) rendering '
                'engine (http://code.google.com/p/wkhtmltopdf/)'))])
+
+    def _wkPagesizeVocabulary(self):
+        return atapi.DisplayList([
+            ('A4',
+             _(u'label_a4',
+               default=u'A4')),
+            ('Letter',
+             _(u'label_letter',
+               default=u'Letter'))])
 
     def _getMetadata(self):
         """ Gets the annotations linked to the tool.
@@ -370,11 +404,21 @@ class SendAsPDFTool(ImmutableId, ATDocument):
 
         options = {
             'book': self.getUse_book_style(),
+            'page-size': self.getPage_size(),
             'margin-top': self.getMargin_top(),
             'margin-right': self.getMargin_right(),
             'margin-bottom': self.getMargin_bottom(),
             'margin-left': self.getMargin_left()
         }
+
+        # viewport-size only works with a qt patched version
+        # of wkhtmltopdf.
+        qtpatched = check_output(['wkhtmltopdf', '--version'])
+        if re.findall('with patched qt', qtpatched):
+            logger.error(qtpatched)
+            options['viewport-size'] = self.getScreen_size()
+            logger.error(options)
+            logger.error(self.getScreen_size())
 
         gen_toc = self.getGenerate_toc()
         if gen_toc:
