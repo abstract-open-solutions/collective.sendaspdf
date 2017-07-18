@@ -61,7 +61,7 @@ def html_to_pdf(source, export_dir, filename,
             'utf-8',
             # to work with diazo.
             # https://stackoverflow.com/questions/39934741/plone-collective-sendaspdf-ignores-diazo-theme/39935624
-            orginal_url,
+            original_url,
             #'file://%s/%s' % (export_dir, html_filename),
             '%s/%s' % (export_dir, filename)]
 
