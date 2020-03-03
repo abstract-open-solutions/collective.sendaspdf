@@ -4,7 +4,8 @@ Changelog
 3.1 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- fix diazo working.
+  [ekulos]
 
 
 3.0 (2015-06-24)
